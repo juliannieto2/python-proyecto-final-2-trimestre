@@ -11,7 +11,7 @@ motor_bd = create_engine(url_bd)
 #definir el metodo para crear las tablas
 def crear_tablas(app: FastAPI):
     SQLModel.metadata.create_all(motor_bd)
-    yield
+    yield #no hay nada para retornar o ejecutar
 
 #definir el metodo para la sesion
 def obtener_sesion():

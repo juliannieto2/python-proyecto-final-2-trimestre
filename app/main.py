@@ -1,8 +1,12 @@
-from fastapi import FastAPI
-
+from fastapi import FastAPI, HTTPException, status
+from .enrutadores.clientes import rutas_clientes
+from app.enrutadores.facturas import rutas_facturas
+from app.enrutadores.transacciones import rutas_transacciones
 from app.enrutadores import clientes, facturas, transacciones
+from .conexion_bd import crear_tablas
 
-app = FastAPI()
+
+app = FastAPI(lifespan=crear_tablas) 
 
 app.include_router(clientes.rutas_clientes, tags=["Clientes"])
 app.include_router(facturas.rutas_facturas, tags=["Facturas"])
