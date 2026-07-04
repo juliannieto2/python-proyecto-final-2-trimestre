@@ -3,3 +3,5 @@
 
 #pychache
 __pycache__/
+
+*.png
