@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, status
-from modelos.clientes import Cliente, ClienteCrear, ClienteEditar
-from modelos.facturas import Factura, FacturaCrear, FacturaEditar
-from modelos.transacciones import Transaccion, TransaccionesCrear, TransaccionesEditar
-
+from app.modelos.clientes import Cliente, ClienteCrear, ClienteEditar
+from app.modelos.facturas import Factura, FacturaCrear, FacturaEditar
+from app.modelos.transacciones import Transaccion, TransaccionesCrear, TransaccionesEditar
+from app.enrutadores import clientes
 app = FastAPI()
 
 
@@ -10,61 +10,11 @@ lista_clientes: list[Cliente] = []
 lista_facturas: list[Factura] = []
 lista_transacciones: list[Transaccion] = []
 
-
-#endpoint. para listar todos los clientes
-@app.get("/clientes", response_model=list[Cliente])
-async def listar_cliente():
-    return lista_clientes
-
-#endpoint. para listar un solo cliente cliente de la lista
-@app.get("/clientes/{cliente_id}", response_model=Cliente)
-async def listar_cliente(cliente_id: int):
-    #recorrer la lista_clientes
-    for i, obj_cliente in enumerate(lista_clientes):
-        if obj_cliente.id == cliente_id:
-            return obj_cliente
-    raise HTTPException(
-        status_code=400, detail=f"el cliente con id {cliente_id}, no existe"
-    )
-#enpoint, para crear un cliente y agregar a la lista 
-@app.post("/clientes", response_model=Cliente)
-async def crear_clientes(datos_cliente: ClienteCrear):
-    Cliente_val = Cliente.model_validate(datos_cliente.model_dump())
-    #generar id
-    id_cliente = len(lista_clientes)+1
-    Cliente_val.id = id_cliente
-    lista_clientes.append(Cliente_val)        
-    return Cliente_val
-
-#enpoint, para editar un cliente y agregar a la lista 
-@app.patch("/clientes/{cliente_id}", response_model=Cliente)
-async def editar_cliente(cliente_id: int, datos_cliente: ClienteEditar):
-    for i, obj_cliente in enumerate(lista_clientes):
-        if obj_cliente.id == cliente_id:
-            #validar cliente
-            Cliente_val = Cliente.model_validate(datos_cliente.model_dump())
-            Cliente_val.id = cliente_id
-            lista_clientes[i] = Cliente_val
-            return Cliente_val
-    raise HTTPException(
-            status_code=400, detail=f"El cliente con id {cliente_id}, no existe"
-        )
-
-
-#enpoint eliminar cliente
-@app.delete("/clientes/{cliente_id}", response_model=Cliente)
-async def eliminar_cliente(cliente_id: int):
-    for i, obj_cliente in enumerate(lista_clientes):
-        if obj_cliente.id == cliente_id:
-            cliente_eliminado = lista_clientes.pop(1)
-            return cliente_eliminado
-    raise HTTPException(
-        status_code=400, detail=f"El cliente con id {cliente_id}, no existe"
-    )
+#incluir ruta de clientes 
+app.include_router(clientes.rutas_clientes, tags=["clientes"])
 
 
 #crear los endpoints para facturas
-
 @app.get("/facturas", response_model=list[Factura])
 async def listar_facturas():
     return lista_facturas
@@ -141,6 +91,10 @@ async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionesCre
 
     #id de la transaccion
     transaccion_val.id = len(lista_transacciones)+1 
+    return transaccion_val
+
+    #falto agregar a la lista de transacciones
+    lista_transacciones.append(transaccion_val)
     return transaccion_val
 
 
