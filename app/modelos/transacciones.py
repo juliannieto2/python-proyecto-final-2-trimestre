@@ -18,7 +18,7 @@ class Transaccion(TransaccionesBase, table=True):
     factura_id: int | None = Field(default=None, foreign_key="factura.id")
     #aqui va la relacion virtual con el modelo factura
     #opcional
-    factura: list["Factura"] = Relationship(back_populates="transacciones")
+    factura: "Factura" = Relationship(back_populates="transacciones")
 
 #crea modelo para consultar el usuario o cliente
 class TransaccionLeer(TransaccionesBase):

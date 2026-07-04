@@ -52,12 +52,17 @@ async def editar_cliente(cliente_id: int, datos_cliente: ClienteEditar, mi_sesio
 #enpoint eliminar cliente
 @rutas_clientes.delete("/clientes/{cliente_id}", response_model=Cliente)
 async def eliminar_cliente(cliente_id: int, mi_sesion: Sesion_dependencias):
+
     cliente_bd = mi_sesion.get(Cliente, cliente_id)
+
     if not cliente_bd:
         raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, detail=f"el cliente con id {cliente_id}, no existe"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"El cliente con id {cliente_id} no existe"
         )
+    # Verificar si el cliente tiene facturas
+    if cliente_bd.factura:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="No se puede eliminar el cliente porque tiene facturas asociadas.")
     mi_sesion.delete(cliente_bd)
     mi_sesion.commit()
-    #retornar un mensaje, debe quitar el response model
     return cliente_bd
