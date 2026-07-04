@@ -1,68 +1,115 @@
 from fastapi import APIRouter, HTTPException, status
-from ..modelos.clientes import Cliente, ClienteCrear, ClienteEditar
-from ..listas import lista_clientes
-from ..conexion_bd import Sesion_dependencias
 from sqlmodel import select
+
+from ..modelos.clientes import Cliente, ClienteCrear, ClienteEditar
+from ..conexion_bd import Sesion_dependencias
 
 rutas_clientes = APIRouter()
 
-# lista_clientes: list[Cliente] = []
 
-#endpoint. para listar todos los clientes
+# ==========================
+# LISTAR TODOS LOS CLIENTES
+# ==========================
 @rutas_clientes.get("/clientes", response_model=list[Cliente])
-async def listar_cliente(sesion: Sesion_dependencias):
-    lista_cli = sesion.exec(select(Cliente)).all()
-    return lista_cli
+async def listar_clientes(sesion: Sesion_dependencias):
 
-#endpoint. para listar un solo cliente cliente de la lista
+    return sesion.exec(select(Cliente)).all()
+
+
+# ==========================
+# LISTAR UN CLIENTE
+# ==========================
 @rutas_clientes.get("/clientes/{cliente_id}", response_model=Cliente)
-async def listar_cliente(cliente_id: int, mi_sesion: Sesion_dependencias):
-    cliente_bd = mi_sesion.get(Cliente, cliente_id)
-    if not cliente_bd:
+async def listar_cliente(
+    cliente_id: int,
+    sesion: Sesion_dependencias
+):
+
+    cliente = sesion.get(Cliente, cliente_id)
+
+    if not cliente:
         raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, detail=f"el cliente con id {cliente_id}, no existe"
-        )
-    return cliente_bd 
-
-#enpoint, para crear un cliente y agregar a la lista 
-@rutas_clientes.post("/clientes", response_model=Cliente)
-async def crear_clientes(datos_cliente: ClienteCrear, mi_sesion: Sesion_dependencias):
-    Cliente_val = Cliente.model_validate(datos_cliente.model_dump())
-    mi_sesion.add(Cliente_val)
-    mi_sesion.commit()
-    mi_sesion.refresh(Cliente_val)
-    return Cliente_val
-
-#enpoint, para editar un cliente y agregar a la lista 
-@rutas_clientes.patch("/clientes/{cliente_id}", response_model=Cliente)
-async def editar_cliente(cliente_id: int, datos_cliente: ClienteEditar, mi_sesion: Sesion_dependencias):
-    cliente_bd = mi_sesion.get(Cliente, cliente_id)
-    if not cliente_bd:
-        raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, detail=f"el cliente con id {cliente_id}, no existe"
-        )
-    cliente_dic = datos_cliente.model_dump(exclude_unset=True)
-    cliente_bd.sqlmodel_update(cliente_dic)
-    mi_sesion.add(cliente_bd)
-    mi_sesion.commit()
-    mi_sesion.refresh(cliente_bd)
-    return cliente_bd
-
-
-#enpoint eliminar cliente
-@rutas_clientes.delete("/clientes/{cliente_id}", response_model=Cliente)
-async def eliminar_cliente(cliente_id: int, mi_sesion: Sesion_dependencias):
-
-    cliente_bd = mi_sesion.get(Cliente, cliente_id)
-
-    if not cliente_bd:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"El cliente con id {cliente_id} no existe"
         )
-    # Verificar si el cliente tiene facturas
-    if cliente_bd.factura:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="No se puede eliminar el cliente porque tiene facturas asociadas.")
-    mi_sesion.delete(cliente_bd)
-    mi_sesion.commit()
-    return cliente_bd
+
+    return cliente
+
+
+# ==========================
+# CREAR CLIENTE
+# ==========================
+@rutas_clientes.post("/clientes", response_model=Cliente)
+async def crear_cliente(
+    datos_cliente: ClienteCrear,
+    sesion: Sesion_dependencias
+):
+
+    cliente = Cliente.model_validate(datos_cliente.model_dump())
+
+    sesion.add(cliente)
+    sesion.commit()
+    sesion.refresh(cliente)
+
+    return cliente
+
+
+# ==========================
+# EDITAR CLIENTE
+# ==========================
+@rutas_clientes.patch("/clientes/{cliente_id}", response_model=Cliente)
+async def editar_cliente(
+    cliente_id: int,
+    datos_cliente: ClienteEditar,
+    sesion: Sesion_dependencias
+):
+
+    cliente = sesion.get(Cliente, cliente_id)
+
+    if not cliente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El cliente con id {cliente_id} no existe"
+        )
+
+    datos = datos_cliente.model_dump(exclude_unset=True)
+
+    cliente.sqlmodel_update(datos)
+
+    sesion.add(cliente)
+    sesion.commit()
+    sesion.refresh(cliente)
+
+    return cliente
+
+
+# ==========================
+# ELIMINAR CLIENTE
+# ==========================
+@rutas_clientes.delete("/clientes/{cliente_id}")
+async def eliminar_cliente(
+    cliente_id: int,
+    sesion: Sesion_dependencias
+):
+
+    cliente = sesion.get(Cliente, cliente_id)
+
+    if not cliente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El cliente con id {cliente_id} no existe"
+        )
+
+    # Verificar si el cliente tiene facturas asociadas
+    if cliente.factura:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se puede eliminar el cliente porque tiene facturas asociadas."
+        )
+
+    sesion.delete(cliente)
+    sesion.commit()
+
+    return {
+        "mensaje": "Cliente eliminado correctamente"
+    }
