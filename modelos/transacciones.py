@@ -8,5 +8,8 @@ class TransaccionesBase(BaseModel):
 class TransaccionesCrear(TransaccionesBase):
     pass
 
-class Transacciones(TransaccionesBase):
+class TransaccionesEditar(TransaccionesBase):
+    pass
+
+class Transaccion(TransaccionesBase):
     id: int | None = None
