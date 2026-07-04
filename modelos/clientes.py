@@ -13,4 +13,4 @@ class ClienteEditar(ClienteBase):
     pass
 
 class Cliente(ClienteBase):
-   pass
+  id: int | None = None
