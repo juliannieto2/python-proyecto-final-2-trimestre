@@ -99,7 +99,7 @@ async def crear_factura(cliente_id: int, datos_factura: FacturaCrear):
 
     #id de la factura
     factura_val.id = len(lista_facturas)+1 
-    datos_factura.cliente = cliente_encontrado
+    lista_facturas.append(factura_val)
     return factura_val
 
 @app.patch("/facturas/{id_factura}", response_model=Factura)
@@ -114,15 +114,34 @@ async def eliminar_factura(id_factura):
 
 @app.get("/transacciones", response_model=list[Transaccion])
 async def listar_transacciones():
-    pass
+    return lista_transacciones
 
 @app.get("/transacciones/{id_transaccion}", response_model=Transaccion)
 async def listar_transaccion(id_transaccion: int):
     pass
 
-@app.post("/transacciones/{id_factura}", response_model=Transaccion)
-async def crear_transaccion(id_factura: int, datos_transaccion: Transaccion):
-    pass
+@app.post("/transacciones/{factura_id}", response_model=Transaccion)
+async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionesCrear):
+    
+    #buscar factura
+    factura_encontrada = None
+    for factura in lista_facturas:
+        if factura.id == factura_id:
+            factura_encontrada = factura
+    #mensaje si no existe la factura
+    if not factura_encontrada:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail=f"la factura con id {factura_id}, no existe"
+        )
+    #validar datos de la transaccion
+    transaccion_val = Transaccion.model_validate(datos_transaccion.model_dump())
+    transaccion_val.factura_id = factura_id
+    factura_encontrada.transacciones.append(transaccion_val)
+
+    #id de la transaccion
+    transaccion_val.id = len(lista_transacciones)+1 
+    return transaccion_val
 
 
 @app.patch("/transacciones/{id_transaccion}", response_model=Transaccion)
